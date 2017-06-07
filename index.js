@@ -1,36 +1,46 @@
 class Post extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
+    marked.setOptions({
+      sanitize: true,
+      smartypants: true,
+    });
     this.handleSubmit = this.handleSubmit.bind(this);
   }
   handleSubmit(data) {
     this.refs.comments.addComment(data);
   }
   render() {
-    const post = 'Synth cardigan street art fam keffiyeh, squid pinterest. Man bun keffiyeh leggings, green juice edison bulb salvia lomo humblebrag distillery ennui williamsburg swag 8-bit intelligentsia listicle.\n\nCopper mug 16-bit pug art party fanny pack. Activated charcoal narwhal butcher chicharrones.\n\nVinyl deep v copper mug bitters cray, subway tile narwhal vaporware mlkshk air plant freegan glossier bespoke. Vice retro photo booth sartorial, meggings hot chicken synth gastropub shabby chic. Knausgaard pabst truffaut marfa chicharrones.\n\n---';
-    marked.setOptions({
-      sanitize: true,
-      smartypants: true,
-    });
-    const markdown = marked(post);
-
     return (
-      <div>
-        <header>
+      <main className="post" role="main">
+        <header className="post__header">
           <div className="container">
-            <h1>ReactJS Comment App</h1>
+            <h1 className="post__title">{this.props.title}</h1>
           </div>
         </header>
         <div className="container">
-          <section dangerouslySetInnerHTML={{__html: markdown}} />
-          <h2>Leave a Comment</h2>
-          <CommentForm postID={57} handleSubmit={this.handleSubmit} />
-          <Comments ref="comments" />
+          <article className="post__content"
+            dangerouslySetInnerHTML={{__html: marked(this.props.content)}}
+          />
+          <aside>
+            <h2 className="section-title">Leave a Comment</h2>
+            <CommentForm
+              postID={this.props.id}
+              handleSubmit={this.handleSubmit}
+            />
+            <Comments ref="comments" />
+          </aside>
         </div>
-      </div>
+      </main>
     );
   }
 }
+
+Post.propTypes = {
+  id: React.PropTypes.number.isRequired,
+  title: React.PropTypes.string.isRequired,
+  content: React.PropTypes.string.isRequired,
+};
 
 class Comments extends React.Component {
   constructor() {
@@ -84,62 +94,59 @@ class Comments extends React.Component {
     if (!id) { return; }
 
     this.setState(state => {
-      let comments = state.comments.slice();
-      comments = comments.map(comment => {
-        if (comment.id === id) {
-          return Object.assign({}, comment, {
-            flagged: !comment.flagged,
-          });
-        }
-        return comment;
-      });
-      return {
-        comments,
-      };
+      const comments = state.comments
+        .map(comment => {
+          if (comment.id === id) {
+            return Object.assign({}, comment, {
+              flagged: !comment.flagged,
+            });
+          }
+          return comment;
+        });
+      return { comments };
     });
   }
   handleVotes(id, type) {
-    if (!id || !type) {
-      return;
-    }
+    if (!id || !type) { return; }
+
     this.setState(state => {
-      let comments = state.comments.slice();
-      comments = comments.map(comment => {
-        if (comment.id === id) {
-          const votes = Object.assign({}, comment.votes, {
-            [type]: comment.votes[type] + 1,
-          });
-          return Object.assign({}, comment, {
-            votes,
-          });
-        }
-        return comment;
-      });
-      return {
-        comments,
-      };
+      const comments = state.comments
+        .map(comment => {
+          if (comment.id === id) {
+            const votes = Object.assign({}, comment.votes, {
+              [type]: comment.votes[type] + 1,
+            });
+            return Object.assign({}, comment, {
+              votes,
+            });
+          }
+          return comment;
+        });
+      return { comments };
     });
   }
   addComment(comment) {
     if (!comment) { return; }
-    this.setState(state => {
-      let comments = state.comments.slice();
-      comments.unshift(comment);
 
-      return { comments };
-    });
+    this.setState(state => ({
+      comments: [
+        comment,
+        ...state.comments,
+      ]
+    }));
   }
   deleteComment(id) {
     if (!id) { return; }
-    this.setState(state => {
-      const comments = state.comments.filter(comment => comment.id !== id);
 
-      return { comments };
-    });
+    this.setState(state => ({
+      comments: state.comments.filter(comment => comment.id !== id),
+    }));
   }
   render() {
     const listComments = this.state.comments.map(comment => {
-      const flagged = 'comment' + (comment.flagged ? ' flagged'  : '');
+      const flagged = comment.flagged
+        ? 'comment comment--flagged'
+        : 'comment';
       return (
         <li
           key={comment.id}
@@ -151,14 +158,14 @@ class Comments extends React.Component {
             date={comment.date}
           />
           <Comment comment={comment.comment} />
-          <footer>
+          <footer className="comment__actions">
             <Votes
               id={comment.id}
               votes={comment.votes}
               handleVotes={this.handleVotes}
             />
             <button
-              className="delete"
+              className="btn btn--delete"
               onClick={() => this.deleteComment(comment.id)}
             >Delete</button>
             <Report
@@ -197,11 +204,19 @@ Comment.propTypes = {
 };
 
 const Author = (props) => (
-  <div className="author">
-    <img src={props.author.avatar} />
-    <div className="author-header">
-      <p className="name">{props.author.name}</p>
-      <p className="date">Posted on {props.date.toLocaleString()}</p>
+  <div className="comment__author">
+    <img className="comment__avatar" src={props.author.avatar} />
+    <div className="comment__header">
+      <p className="comment__author-name">{props.author.name}</p>
+      <p className="comment__date">Posted on {
+        new Date(props.date).toLocaleString('en-GB', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      }</p>
     </div>
   </div>
 );
@@ -214,33 +229,33 @@ Author.propTypes = {
   }).isRequired,
 };
 
-const Votes = (props) => {
-  function handleVotes(event) {
-    props.handleVotes(props.id, event.target.className);
-  }
-  return (
-    <div className="votes">
-      <span onClick={handleVotes} className="like">{props.votes.like}</span>
-      <span onClick={handleVotes} className="dislike">{props.votes.dislike}</span>
-    </div>
-  );
-};
+const Votes = (props) => (
+  <div className="votes">
+    <button
+      className="btn btn--votes btn--like"
+      onClick={() => props.handleVotes(props.id, 'like')}
+    >{props.votes.like}</button>
+    <button
+      className="btn btn--votes btn--dislike"
+      onClick={() => props.handleVotes(props.id, 'dislike')}
+    >{props.votes.dislike}</button>
+  </div>
+);
 
 Votes.propTypes = {
   id: React.PropTypes.number.isRequired,
-  votes: React.PropTypes.objectOf(React.PropTypes.number).isRequired,
+  votes: React.PropTypes.objectOf(
+    React.PropTypes.number.isRequired,
+  ).isRequired,
   handleVotes: React.PropTypes.func.isRequired,
 };
 
-const Report = (props) => {
-  function handleFlag() {
-    props.handleFlag(props.id);
-  }
-  if (props.flagged) {
-    return (<button onClick={handleFlag}>Not Spam</button>);
-  }
-  return (<button onClick={handleFlag}>Spam</button>);
-}
+const Report = props => (
+  <button
+    className="btn btn--report"
+    onClick={() => props.handleFlag(props.id)}
+  >{props.flagged ? 'Not Spam' : 'Spam'}</button>
+);
 
 Report.propTypes = {
   id: React.PropTypes.number.isRequired,
@@ -301,11 +316,13 @@ class CommentForm extends React.Component {
   render() {
     return (
       <form
+        className="comment__form"
         onChange={this.handleChange}
         onSubmit={this.handleSubmit}
       >
-        <div className="inputs">
+        <div className="comment__field-group">
           <input
+            className="comment__field"
             type="text"
             name="name"
             required
@@ -313,6 +330,7 @@ class CommentForm extends React.Component {
             defaultValue={this.state.name}
           />
           <input
+            className="comment__field"
             type="email"
             name="email"
             required
@@ -321,13 +339,14 @@ class CommentForm extends React.Component {
           />
         </div>
         <textarea
+          className="comment__field"
           name="comment"
           required
           rows="5"
           placeholder="Type your comment..."
           defaultValue={this.state.comment}
         />
-        <input type="submit" value="Post comment" />
+        <button className="btn btn--submit" type="submit">Post comment</button>
       </form>
     );
   }
@@ -338,4 +357,13 @@ CommentForm.propTypes = {
   handleSubmit: React.PropTypes.func.isRequired,
 };
 
-ReactDOM.render(<Post />, document.getElementById('post'));
+const post = {
+  id: 57,
+  title: 'ReactJS Comment App',
+  content: 'Synth cardigan street art fam keffiyeh, squid pinterest. Man bun keffiyeh leggings, green juice edison bulb salvia lomo humblebrag distillery ennui williamsburg swag 8-bit intelligentsia listicle.\n\nCopper mug 16-bit pug art party fanny pack. Activated charcoal narwhal butcher chicharrones.\n\nVinyl deep v copper mug bitters cray, subway tile narwhal vaporware mlkshk air plant freegan glossier bespoke. Vice retro photo booth sartorial, meggings hot chicken synth gastropub shabby chic. Knausgaard pabst truffaut marfa chicharrones.\n\n---',
+};
+
+ReactDOM.render(
+  <Post {...post} />,
+  document.getElementById('post')
+);
