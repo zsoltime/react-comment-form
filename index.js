@@ -59,7 +59,7 @@ class Comments extends React.Component {
       author: {
         name: 'Peter',
         email: 'fakemail@gmail.com',
-        avatar: '/images/man-1.svg',
+        avatar: 'images/man-1.svg',
       },
       comment: 'Unicorn tumeric kale chips, fashion axe iceland sartorial blue bottle pinterest. Artisan gentrify *umami edison bulb*, austin locavore echo park farm-to-table single-origin coffee pabst green juice fashion axe twee yuccie listicle.\n\nWilliamsburg __8-bit lomo venmo__, you probably haven\'t heard of them semiotics leggings microdosing viral helvetica copper mug narwhal readymade.',
       date: new Date(new Date().getTime() - 2*6e4),
@@ -74,7 +74,7 @@ class Comments extends React.Component {
       author: {
         name: 'Levy',
         email: 'levy@starbucks.com',
-        avatar: '/images/man-2.svg',
+        avatar: 'images/man-2.svg',
       },
       comment: 'Bitters neutra hoodie cray, pabst pug ugh austin small batch irony food truck synth semiotics franzen woke. Pitchfork etsy wayfarers cred. Fixie live-edge keffiyeh freegan, knausgaard +1 butcher. DIY biodiesel four dollar toast aesthetic squid health goth, vegan la croix fashion axe affogato deep v vice whatever.',
       date: new Date(new Date().getTime() - 5*6e4),
@@ -301,7 +301,7 @@ class CommentForm extends React.Component {
       author: {
         name: this.state.name,
         email: this.state.email,
-        avatar: '/images/man-3.svg',
+        avatar: 'images/man-3.svg',
       },
       comment: this.state.comment,
       date: new Date().toISOString(),
